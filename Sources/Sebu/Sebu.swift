@@ -45,6 +45,10 @@ public class Sebu {
         try FileManager.default.createDirectory(at: Sebu.cachePath, withIntermediateDirectories: true, attributes: nil)
     }
     
+    public class func clear(_ name: String) throws {
+        try FileManager.default.removeItem(at: Sebu.cachePath.appendingPathComponent(name))
+    }
+    
     private class func checkForDirectory() throws {
         if !FileManager.default.fileExists(atPath: Sebu.cachePath.path) {
             try FileManager.default.createDirectory(at: Sebu.cachePath, withIntermediateDirectories: true, attributes: nil)
