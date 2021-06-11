@@ -27,11 +27,11 @@ public class Sebu {
             .write(to: Sebu.cachePath.appendingPathComponent(name))
     }
     
-    public class func `get`<T: Codable>(withName name: String, shouldBypassCache bypassCache: Bool = false) throws -> T? {
+    public class func `get`<T: Codable>(withName name: String, shouldBypassExpiration bypassExpiration: Bool = false) throws -> T? {
         let object = try Sebu.decoder
             .decode(Object<T>.self, from: Data(contentsOf: Sebu.cachePath.appendingPathComponent(name)))
         
-        if bypassCache {
+        if bypassExpiration {
             return object.object
         } else if let expires = object.expires, expires > Date() {
             return object.object
