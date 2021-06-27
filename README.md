@@ -14,14 +14,14 @@ Save object
 
 ```swift
 let tweets = [Tweet()] // Your own object(s)
-try Sebu.save(tweets,
+try Sebu.default.save(tweets,
               withName: "homeTimeline") // Your own cache name (overwrites by default)
 ```
 
 Save object with expiration
 
 ```swift
-try Sebu.save(tweets,
+try Sebu.default.save(tweets,
               withName: "homeTimeline",
               expiration: Calendar.current.date(byAdding: .minute, value: 5, to: Date())) // Expires in 5 minutes from now
 ```
@@ -29,7 +29,7 @@ try Sebu.save(tweets,
 #### Get
 
 ```swift
-if let cache: [Tweet] = try? Sebu.get(withName: "homeTimeline") {
+if let cache: [Tweet] = try? Sebu.default.get(withName: "homeTimeline") {
   self.tweets = cache
 }
 ```
@@ -39,12 +39,12 @@ if let cache: [Tweet] = try? Sebu.get(withName: "homeTimeline") {
 All cache
 
 ```swift
-Sebu.clearAll()
+Sebu.default.clearAll()
 ```
 
 Clear certain object
 
 ```swift
-Sebu.clear("homeTimeline")
+Sebu.default.clear("homeTimeline")
 ```
 
