@@ -45,6 +45,10 @@ public class Sebu {
         struct Object: Codable {
             var name: String
             var expiration: Date?
+            
+            var isExpired: Bool {
+                return expiration != nil ? (expiration! < Date()) : false
+            }
         }
         
         subscript(name: String) -> Object? {
@@ -98,8 +102,7 @@ public class Sebu {
     
     public func `get`<T: Codable>(withName name: String, shouldBypassExpiration bypassExpiration: Bool = false) throws -> T? {
         
-        let expiration = cacheInfo[name]?.expiration
-        let isExpired = expiration != nil ? (expiration! < Date()) : false
+        let isExpired = cacheInfo[name]?.isExpired ?? true
         
         if let cache = nsCache.object(forKey: name as NSString) as? T, (bypassExpiration || !isExpired) {
             return cache
@@ -113,6 +116,10 @@ public class Sebu {
         } else {
             return nil
         }
+    }
+    
+    public func hasObject(withName name: String, shouldCheckExpiration checksExpiration: Bool = true) -> Bool {
+        return cacheInfo.objects.contains(where: { $0.name == name && (checksExpiration ? !$0.isExpired : true) })
     }
     
     public func clearAll() throws {
@@ -133,9 +140,39 @@ public class Sebu {
         try expiredObjects.forEach({ try clear($0.name) })
     }
     
+    public func getSize() throws -> Int? {
+        return try cachePath.directoryTotalAllocatedSize()
+    }
+    
     private func checkForDirectory() throws {
         if !FileManager.default.fileExists(atPath: cachePath.path) {
             try FileManager.default.createDirectory(at: cachePath, withIntermediateDirectories: true, attributes: nil)
+        }
+    }
+}
+
+fileprivate extension URL {
+    /// check if the URL is a directory and if it is reachable
+    func isDirectoryAndReachable() throws -> Bool {
+        guard try resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true else {
+            return false
+        }
+        return try checkResourceIsReachable()
+    }
+
+    /// returns total allocated size of a the directory including its subFolders or not
+    func directoryTotalAllocatedSize(includingSubfolders: Bool = false) throws -> Int? {
+        guard try isDirectoryAndReachable() else { return nil }
+        if includingSubfolders {
+            guard
+                let urls = FileManager.default.enumerator(at: self, includingPropertiesForKeys: nil)?.allObjects as? [URL] else { return nil }
+            return try urls.lazy.reduce(0) {
+                    (try $1.resourceValues(forKeys: [.totalFileAllocatedSizeKey]).totalFileAllocatedSize ?? 0) + $0
+            }
+        }
+        return try FileManager.default.contentsOfDirectory(at: self, includingPropertiesForKeys: nil).lazy.reduce(0) {
+                 (try $1.resourceValues(forKeys: [.totalFileAllocatedSizeKey])
+                    .totalFileAllocatedSize ?? 0) + $0
         }
     }
 }
