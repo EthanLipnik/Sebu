@@ -9,6 +9,6 @@ final class SebuTests: XCTestCase {
     }
     
     func saveObject() {
-        Sebu.save(TestStruct(), withName: "test", expiration: nil)
+        try? Sebu.default.save(TestStruct(), withName: "test", expiration: nil)
     }
 }
