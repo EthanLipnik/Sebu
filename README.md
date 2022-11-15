@@ -14,14 +14,14 @@ Save object
 
 ```swift
 let tweets = [Tweet()] // Your own object(s)
-try Sebu.default.save(tweets,
+try Sebu.default.set(tweets,
               withName: "homeTimeline") // Your own cache name (overwrites by default)
 ```
 
 Save object with expiration
 
 ```swift
-try Sebu.default.save(tweets,
+try Sebu.default.set(tweets,
               withName: "homeTimeline",
               expiration: Calendar.current.date(byAdding: .minute, value: 5, to: Date())) // Expires in 5 minutes from now
 ```
