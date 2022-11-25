@@ -193,16 +193,10 @@ open class Sebu {
         syncTask = Task(priority: .background) { [cacheInfo, cachePath] in
             try await Task.sleep(nanoseconds: 2_000_000_000)
 
-            let path = cachePath.appendingPathComponent("CacheInfo").path
+            let path = cachePath.appendingPathComponent("CacheInfo")
             let data = try Sebu.encoder.encode(cacheInfo)
 
-            if !FileManager.default.fileExists(atPath: path) {
-                FileManager.default.createFile(atPath: path, contents: nil)
-            }
-
-            let fileHandle = FileHandle(forWritingAtPath: path)
-            try fileHandle?.seekToEnd()
-            try fileHandle?.write(contentsOf: data)
+            try data.write(to: path)
         }
 
         try await syncTask?.value
