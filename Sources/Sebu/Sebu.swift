@@ -35,11 +35,7 @@ open class Sebu {
     }() {
         didSet {
             Task(priority: .background) {
-                do {
-                    try await sync()
-                } catch {
-                    Log("Failed to sync", error.localizedDescription)
-                }
+                try? await sync()
             }
         }
     }
