@@ -15,6 +15,8 @@ open class Sebu {
     public static let encoder = JSONEncoder()
     public static let decoder = JSONDecoder()
 
+    private lazy var syncTask: Task<Void, Error>? = nil
+
     public let isPersistent: Bool
 
     public init(_ cachePath: URL = Sebu.defaultCachePath, isPersistent: Bool = true) {
@@ -32,14 +34,12 @@ open class Sebu {
         return Sebu.CacheInfo(path: path)
     }() {
         didSet {
-            guard isPersistent else { return }
-
-            do {
-                try Sebu.encoder
-                    .encode(cacheInfo)
-                    .write(to: cachePath.appendingPathComponent("CacheInfo"))
-            } catch {
-                Log(error.localizedDescription)
+            Task(priority: .background) {
+                do {
+                    try await sync()
+                } catch {
+                    Log("Failed to sync", error.localizedDescription)
+                }
             }
         }
     }
@@ -185,6 +185,29 @@ open class Sebu {
                 attributes: nil
             )
         }
+    }
+
+    private func sync() async throws {
+        guard isPersistent else { return }
+
+        syncTask?.cancel()
+
+        syncTask = Task(priority: .background) { [cacheInfo, cachePath] in
+            try await Task.sleep(nanoseconds: 2_000_000_000)
+
+            let path = cachePath.appendingPathComponent("CacheInfo").path
+            let data = try Sebu.encoder.encode(cacheInfo)
+
+            if !FileManager.default.fileExists(atPath: path) {
+                FileManager.default.createFile(atPath: path, contents: nil)
+            }
+
+            let fileHandle = FileHandle(forWritingAtPath: path)
+            try fileHandle?.seekToEnd()
+            try fileHandle?.write(contentsOf: data)
+        }
+
+        try await syncTask?.value
     }
 }
 
