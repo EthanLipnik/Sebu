@@ -32,13 +32,7 @@ open class Sebu {
             path = Sebu.defaultCachePath.appendingPathComponent("CacheInfo")
         }
         return Sebu.CacheInfo(path: path)
-    }() {
-        didSet {
-            Task(priority: .background) {
-                try? await sync()
-            }
-        }
-    }
+    }()
 
     private struct CacheInfo: Codable {
         var objects: [Object] = []
@@ -107,6 +101,10 @@ open class Sebu {
         try Sebu.encoder
             .encode(object)
             .write(to: cachePath.appendingPathComponent(name))
+
+        Task(priority: .background) {
+            try? await sync()
+        }
     }
 
     public func get<T: Codable>(
@@ -158,6 +156,10 @@ open class Sebu {
 
         guard isPersistent else { return }
         try FileManager.default.removeItem(at: cachePath.appendingPathComponent(name))
+
+        Task(priority: .background) {
+            try? await sync()
+        }
     }
 
     /// Only neccesary for persistent  caches
