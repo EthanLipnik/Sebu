@@ -15,24 +15,23 @@ open class Sebu {
     public static let encoder = JSONEncoder()
     public static let decoder = JSONDecoder()
 
-    private lazy var syncTask: Task<Void, Error>? = nil
+    private var syncTask: Task<Void, Error>?
 
     public let isPersistent: Bool
 
     public init(_ cachePath: URL = Sebu.defaultCachePath, isPersistent: Bool = true) {
         self.cachePath = cachePath
         self.isPersistent = isPersistent
-    }
 
-    private lazy var nsCache = NSCache<NSString, AnyObject>()
-    private lazy var cacheInfo: CacheInfo = {
         var path: URL?
-
         if isPersistent {
             path = Sebu.defaultCachePath.appendingPathComponent("CacheInfo")
         }
-        return Sebu.CacheInfo(path: path)
-    }()
+        cacheInfo = Sebu.CacheInfo(path: path)
+    }
+
+    private var nsCache = NSCache<NSString, AnyObject>()
+    private var cacheInfo: CacheInfo
 
     private struct CacheInfo: Codable {
         var objects: [Object] = []
