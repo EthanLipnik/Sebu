@@ -1,6 +1,6 @@
 import Foundation
 
-open class Sebu {
+public actor Sebu {
     /// Defaults to ``persistent``.
     public static let `default` = Sebu.persistent
     public static let persistent = Sebu(isPersistent: true)
@@ -30,7 +30,10 @@ open class Sebu {
         cacheInfo = Sebu.CacheInfo(path: path)
     }
 
+    @MainActor
     private var nsCache = NSCache<NSString, AnyObject>()
+
+    @MainActor
     private var cacheInfo: CacheInfo
 
     private struct CacheInfo: Codable {
@@ -64,6 +67,7 @@ open class Sebu {
             }
         }
 
+        @MainActor
         subscript(name: String) -> Object? {
             get {
                 return objects.last(where: { $0.name == name })
@@ -87,6 +91,7 @@ open class Sebu {
         }
     }
 
+    @MainActor
     public func set<T: Codable>(
         _ object: T,
         withName name: String,
@@ -106,6 +111,7 @@ open class Sebu {
         }
     }
 
+    @MainActor
     public func get<T: Codable>(
         withName name: String,
         shouldBypassExpiration bypassExpiration: Bool = false
@@ -130,6 +136,7 @@ open class Sebu {
         }
     }
 
+    @MainActor
     public func hasObject(
         withName name: String,
         shouldCheckExpiration checksExpiration: Bool = true
@@ -138,6 +145,7 @@ open class Sebu {
             .contains(where: { $0.name == name && (checksExpiration ? !$0.isExpired : true) })
     }
 
+    @MainActor
     public func clearAll() throws {
         nsCache.removeAllObjects()
 
@@ -150,6 +158,7 @@ open class Sebu {
         )
     }
 
+    @MainActor
     public func clear(_ name: String) throws {
         cacheInfo.removeObject(name)
 
@@ -162,6 +171,7 @@ open class Sebu {
     }
 
     /// Only neccesary for persistent  caches
+    @MainActor
     public func purgeOutdated() throws {
         let expiredObjects = cacheInfo.objects
             .filter { $0.expiration != nil }
@@ -174,6 +184,7 @@ open class Sebu {
         return try cachePath.directoryTotalAllocatedSize()
     }
 
+    @MainActor
     private func checkForDirectory() throws {
         if !FileManager.default.fileExists(atPath: cachePath.path) {
             try FileManager.default.createDirectory(
@@ -189,11 +200,16 @@ open class Sebu {
 
         syncTask?.cancel()
 
-        syncTask = Task(priority: .background) { [cacheInfo, cachePath] in
+        syncTask = Task(priority: .background) { [weak self] in
             try await Task.sleep(nanoseconds: 2_000_000_000)
 
-            let path = cachePath.appendingPathComponent("CacheInfo")
-            let data = try Sebu.encoder.encode(cacheInfo)
+            guard let self else { return }
+
+            let cache = self.cachePath
+            let info = await self.cacheInfo
+
+            let path = cache.appendingPathComponent("CacheInfo")
+            let data = try Sebu.encoder.encode(info)
 
             try data.write(to: path)
         }

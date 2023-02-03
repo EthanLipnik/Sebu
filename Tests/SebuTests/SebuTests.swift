@@ -7,6 +7,7 @@ final class SebuTests: XCTestCase {
         var test = "test"
     }
 
+    @MainActor
     func testSaveObject() throws {
         try Sebu.default.set(TestStruct(), withName: "test", expiration: nil)
     }
