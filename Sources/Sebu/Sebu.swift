@@ -185,6 +185,11 @@ public actor Sebu {
     }
 
     @MainActor
+    public func getExpiration(_ name: String) -> Date? {
+        cacheInfo[name]?.expiration
+    }
+
+    @MainActor
     private func checkForDirectory() throws {
         if !FileManager.default.fileExists(atPath: cachePath.path) {
             try FileManager.default.createDirectory(
